@@ -111,6 +111,11 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
             );
         }
 
+        // (Optional but recommended) basic input guardrails
+        if (measurementsByCode == null || measurementsByCode.isEmpty()) {
+            throw new IllegalArgumentException("No measurements submitted for run: " + instrumentRunId);
+        }
+
         // 3) Load measurement definitions for this instrument
         Map<String, MeasurementDefinition> definitionsByCode =
                 measurementDefinitionRepository
@@ -121,15 +126,23 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
                                 d -> d
                         ));
 
-        // 4) Persist measurements
+        // 4) Validate ALL codes (and values) before persisting anything
+        for (Map.Entry<String, BigDecimal> entry : measurementsByCode.entrySet()) {
+            String code = entry.getKey();
+
+            if (!definitionsByCode.containsKey(code)) {
+                throw new IllegalArgumentException("Unknown measurement code: " + code);
+            }
+
+            // Optional: reject null values (BigDecimal should be present)
+            if (entry.getValue() == null) {
+                throw new IllegalArgumentException("Measurement value is required for code: " + code);
+            }
+        }
+
+        // 5) Persist measurements (now safe)
         for (Map.Entry<String, BigDecimal> entry : measurementsByCode.entrySet()) {
             MeasurementDefinition definition = definitionsByCode.get(entry.getKey());
-
-            if (definition == null) {
-                throw new IllegalArgumentException(
-                        "Unknown measurement code: " + entry.getKey()
-                );
-            }
 
             Measurement measurement = new Measurement();
             measurement.setInstrumentRun(run);
@@ -139,22 +152,21 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
             measurementRepository.save(measurement);
         }
 
-        // 5) Update run
+        // 6) Update run
         OffsetDateTime now = OffsetDateTime.now();
         run.setStatus(InstrumentRunStatus.MEASUREMENTS_SUBMITTED);
         run.setMeasurementsSubmittedAt(now);
         run.setMeasurementsSubmittedByClientId(submittedByClientId);
 
-        // Persist run changes (so they’re definitely part of this transaction)
         instrumentRunRepository.save(run);
 
-        // 6) Emit audit event
+        // 7) Emit audit event
         InstrumentRunEvent event = new InstrumentRunEvent();
         event.setInstrumentRun(run);
         event.setEventType(InstrumentRunEventType.MEASUREMENTS_SUBMITTED);
         instrumentRunEventRepository.save(event);
 
-        // 7) Kick off async processing AFTER COMMIT to avoid clobbering fields
+        // 8) Kick off async processing AFTER COMMIT
         Long runId = run.getId();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -163,9 +175,9 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
             }
         });
 
-        // Re-fetch full state and return it
         return getRunById(run.getId());
     }
+
 
     @Override
     @Transactional(readOnly = true)

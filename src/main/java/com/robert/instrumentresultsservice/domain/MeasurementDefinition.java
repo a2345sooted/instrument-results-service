@@ -78,8 +78,7 @@ public class MeasurementDefinition {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    protected MeasurementDefinition() {
-        // JPA
+    public MeasurementDefinition() {
     }
 
     // --- Getters & setters ---

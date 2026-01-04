@@ -66,8 +66,7 @@ public class InstrumentMeasurement {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    protected InstrumentMeasurement() {
-        // JPA
+    public InstrumentMeasurement() {
     }
 
     // --- Getters & setters ---

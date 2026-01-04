@@ -64,7 +64,7 @@ public class Instrument {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    protected Instrument() {
+    public Instrument() {
     }
 
     public Long getId() {
