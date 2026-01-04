@@ -1,5 +1,6 @@
 package com.robert.instrumentresultsservice.domain;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -42,11 +45,10 @@ public class InstrumentRunEvent {
     @Column(name = "event_type", nullable = false, length = 48)
     private InstrumentRunEventType eventType;
 
-    /**
-     * Optional event details. Start as TEXT; can move to jsonb later.
-     */
-    @Column(name = "details", columnDefinition = "TEXT")
-    private String details;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode details;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -66,8 +68,13 @@ public class InstrumentRunEvent {
     public InstrumentRunEventType getEventType() { return eventType; }
     public void setEventType(InstrumentRunEventType eventType) { this.eventType = eventType; }
 
-    public String getDetails() { return details; }
-    public void setDetails(String details) { this.details = details; }
+    public JsonNode getDetails() {
+        return details;
+    }
+
+    public void setDetails(JsonNode details) {
+        this.details = details;
+    }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }

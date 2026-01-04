@@ -1,6 +1,7 @@
 package com.robert.instrumentresultsservice.api.dto;
 
 import com.robert.instrumentresultsservice.domain.InstrumentRunStatus;
+import com.robert.instrumentresultsservice.service.result.ProcessResult;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,7 +23,7 @@ public record GetInstrumentRunResponse(
         OffsetDateTime processingCompletedAt,
         String errorCode,
         String errorMessage,
-        String processResult,
+        ProcessResult processResult,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         List<RequiredMeasurementDto> requiredMeasurements

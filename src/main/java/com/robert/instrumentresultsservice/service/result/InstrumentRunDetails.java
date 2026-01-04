@@ -19,7 +19,7 @@ public record InstrumentRunDetails(
         OffsetDateTime processingCompletedAt,
         String errorCode,
         String errorMessage,
-        String processResult,
+        ProcessResult processResult,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         List<RequiredMeasurement> requiredMeasurements

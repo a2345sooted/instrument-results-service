@@ -14,7 +14,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
+import com.robert.instrumentresultsservice.service.result.ProcessResult;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -87,8 +89,9 @@ public class InstrumentRun {
     /**
      * Processing result payload (TEXT now, jsonb later).
      */
-    @Column(name = "process_result", columnDefinition = "TEXT")
-    private String processResult;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "process_result", columnDefinition = "jsonb")
+    private ProcessResult processResult;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -151,8 +154,13 @@ public class InstrumentRun {
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 
-    public String getProcessResult() { return processResult; }
-    public void setProcessResult(String processResult) { this.processResult = processResult; }
+    public ProcessResult getProcessResult() {
+        return processResult;
+    }
+
+    public void setProcessResult(ProcessResult processResult) {
+        this.processResult = processResult;
+    }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

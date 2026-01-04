@@ -7,7 +7,8 @@ import com.robert.instrumentresultsservice.service.result.InstrumentRunDetails;
 import com.robert.instrumentresultsservice.service.result.RequiredMeasurement;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -24,23 +25,27 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
     private final MeasurementRepository measurementRepository;
     private final MeasurementDefinitionRepository measurementDefinitionRepository;
     private final InstrumentMeasurementRepository instrumentMeasurementRepository;
+    private final ProcessingService processingService;
 
 
     public InstrumentRunServiceImpl(
             InstrumentRepository instrumentRepository,
             InstrumentRunRepository instrumentRunRepository,
-            InstrumentRunEventRepository instrumentRunEventRepository,
-            MeasurementRepository measurementRepository,
             MeasurementDefinitionRepository measurementDefinitionRepository,
-            InstrumentMeasurementRepository instrumentMeasurementRepository
+            MeasurementRepository measurementRepository,
+            InstrumentRunEventRepository instrumentRunEventRepository,
+            InstrumentMeasurementRepository instrumentMeasurementRepository,
+            ProcessingService processingService
     ) {
         this.instrumentRepository = instrumentRepository;
         this.instrumentRunRepository = instrumentRunRepository;
-        this.instrumentRunEventRepository = instrumentRunEventRepository;
-        this.measurementRepository = measurementRepository;
         this.measurementDefinitionRepository = measurementDefinitionRepository;
+        this.measurementRepository = measurementRepository;
+        this.instrumentRunEventRepository = instrumentRunEventRepository;
         this.instrumentMeasurementRepository = instrumentMeasurementRepository;
+        this.processingService = processingService;
     }
+
 
 
     @Override
@@ -140,12 +145,23 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
         run.setMeasurementsSubmittedAt(now);
         run.setMeasurementsSubmittedByClientId(submittedByClientId);
 
+        // Persist run changes (so they’re definitely part of this transaction)
+        instrumentRunRepository.save(run);
+
         // 6) Emit audit event
         InstrumentRunEvent event = new InstrumentRunEvent();
         event.setInstrumentRun(run);
         event.setEventType(InstrumentRunEventType.MEASUREMENTS_SUBMITTED);
-
         instrumentRunEventRepository.save(event);
+
+        // 7) Kick off async processing AFTER COMMIT to avoid clobbering fields
+        Long runId = run.getId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                processingService.processRunAsync(runId);
+            }
+        });
 
         // Re-fetch full state and return it
         return getRunById(run.getId());
