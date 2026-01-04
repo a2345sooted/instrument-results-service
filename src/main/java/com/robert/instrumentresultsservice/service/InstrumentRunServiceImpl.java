@@ -4,7 +4,6 @@ import com.robert.instrumentresultsservice.domain.*;
 import com.robert.instrumentresultsservice.repository.*;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunCreated;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunDetails;
-import com.robert.instrumentresultsservice.service.result.MeasurementsSubmitted;
 import com.robert.instrumentresultsservice.service.result.RequiredMeasurement;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,7 +86,7 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
 
     @Override
     @Transactional
-    public MeasurementsSubmitted submitMeasurements(
+    public InstrumentRunDetails submitMeasurements(
             Long instrumentRunId,
             Map<String, BigDecimal> measurementsByCode,
             UUID submittedByClientId
@@ -148,11 +147,8 @@ public class InstrumentRunServiceImpl implements InstrumentRunService {
 
         instrumentRunEventRepository.save(event);
 
-        return new MeasurementsSubmitted(
-                run.getId(),
-                measurementsByCode.size(),
-                now
-        );
+        // Re-fetch full state and return it
+        return getRunById(run.getId());
     }
 
     @Override

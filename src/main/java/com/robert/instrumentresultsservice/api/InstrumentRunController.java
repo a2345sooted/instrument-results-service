@@ -4,7 +4,6 @@ import com.robert.instrumentresultsservice.api.dto.*;
 import com.robert.instrumentresultsservice.service.InstrumentRunService;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunCreated;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunDetails;
-import com.robert.instrumentresultsservice.service.result.MeasurementsSubmitted;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,23 +49,19 @@ public class InstrumentRunController {
      * Submit measurements for an instrument run.
      */
     @PostMapping("/{runId}/measurements")
-    public SubmitMeasurementsResponse submitMeasurements(
+    public GetInstrumentRunResponse submitMeasurements(
             @PathVariable Long runId,
             @RequestBody @Valid SubmitMeasurementsRequest request,
             @RequestHeader(CLIENT_ID_HEADER) UUID clientId
     ) {
-        MeasurementsSubmitted result =
+        InstrumentRunDetails result =
                 instrumentRunService.submitMeasurements(
                         runId,
                         request.measurements(),
                         clientId
                 );
 
-        return new SubmitMeasurementsResponse(
-                result.instrumentRunId(),
-                result.measurementCount(),
-                result.submittedAt()
-        );
+        return toGetInstrumentRunResponse(result);
     }
 
     /**
@@ -75,7 +70,10 @@ public class InstrumentRunController {
     @GetMapping("/{runId}")
     public GetInstrumentRunResponse getRunById(@PathVariable Long runId) {
         InstrumentRunDetails result = instrumentRunService.getRunById(runId);
+        return toGetInstrumentRunResponse(result);
+    }
 
+    private GetInstrumentRunResponse toGetInstrumentRunResponse(InstrumentRunDetails result) {
         List<RequiredMeasurementDto> requiredMeasurements = result.requiredMeasurements()
                 .stream()
                 .map(rm -> new RequiredMeasurementDto(
