@@ -1,9 +1,11 @@
 package com.robert.instrumentresultsservice.api;
 
 import com.robert.instrumentresultsservice.api.dto.*;
+import com.robert.instrumentresultsservice.service.InstrumentRunQueryService;
 import com.robert.instrumentresultsservice.service.InstrumentRunService;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunCreated;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunDetails;
+import com.robert.instrumentresultsservice.service.result.InstrumentRunListItem;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +19,14 @@ import static com.robert.instrumentresultsservice.api.ApiConstants.CLIENT_ID_HEA
 public class InstrumentRunController {
 
     private final InstrumentRunService instrumentRunService;
+    private final InstrumentRunQueryService instrumentRunQueryService;
 
-    public InstrumentRunController(InstrumentRunService instrumentRunService) {
+    public InstrumentRunController(
+            InstrumentRunService instrumentRunService,
+            InstrumentRunQueryService instrumentRunQueryService
+    ) {
         this.instrumentRunService = instrumentRunService;
+        this.instrumentRunQueryService = instrumentRunQueryService;
     }
 
     /**
@@ -103,5 +110,10 @@ public class InstrumentRunController {
                 result.updatedAt(),
                 requiredMeasurements
         );
+    }
+
+    @GetMapping
+    public List<InstrumentRunListItem> getAllRuns() {
+        return instrumentRunQueryService.getAllRuns();
     }
 }
