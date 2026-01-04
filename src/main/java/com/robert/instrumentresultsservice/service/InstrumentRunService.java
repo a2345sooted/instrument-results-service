@@ -1,6 +1,7 @@
 package com.robert.instrumentresultsservice.service;
 
 import com.robert.instrumentresultsservice.service.result.InstrumentRunCreated;
+import com.robert.instrumentresultsservice.service.result.InstrumentRunDetails;
 import com.robert.instrumentresultsservice.service.result.MeasurementsSubmitted;
 
 import java.math.BigDecimal;
@@ -20,4 +21,6 @@ public interface InstrumentRunService {
             Map<String, BigDecimal> measurementsByCode,
             UUID submittedByClientId
     );
+
+    InstrumentRunDetails getRunById(Long instrumentRunId);
 }

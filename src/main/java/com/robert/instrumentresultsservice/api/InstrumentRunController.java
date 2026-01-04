@@ -1,20 +1,14 @@
 package com.robert.instrumentresultsservice.api;
 
-import com.robert.instrumentresultsservice.api.dto.CreateInstrumentRunRequest;
-import com.robert.instrumentresultsservice.api.dto.CreateInstrumentRunResponse;
-import com.robert.instrumentresultsservice.api.dto.SubmitMeasurementsRequest;
-import com.robert.instrumentresultsservice.api.dto.SubmitMeasurementsResponse;
+import com.robert.instrumentresultsservice.api.dto.*;
 import com.robert.instrumentresultsservice.service.InstrumentRunService;
 import com.robert.instrumentresultsservice.service.result.InstrumentRunCreated;
+import com.robert.instrumentresultsservice.service.result.InstrumentRunDetails;
 import com.robert.instrumentresultsservice.service.result.MeasurementsSubmitted;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.robert.instrumentresultsservice.api.ApiConstants.CLIENT_ID_HEADER;
@@ -72,6 +66,44 @@ public class InstrumentRunController {
                 result.instrumentRunId(),
                 result.measurementCount(),
                 result.submittedAt()
+        );
+    }
+
+    /**
+     * Get an instrument run by ID.
+     */
+    @GetMapping("/{runId}")
+    public GetInstrumentRunResponse getRunById(@PathVariable Long runId) {
+        InstrumentRunDetails result = instrumentRunService.getRunById(runId);
+
+        List<RequiredMeasurementDto> requiredMeasurements = result.requiredMeasurements()
+                .stream()
+                .map(rm -> new RequiredMeasurementDto(
+                        rm.code(),
+                        rm.name(),
+                        rm.unit(),
+                        rm.displayOrder(),
+                        rm.submittedValue()
+                ))
+                .toList();
+
+        return new GetInstrumentRunResponse(
+                result.id(),
+                result.instrumentCode(),
+                result.instrumentName(),
+                result.createdByClientId(),
+                result.externalReference(),
+                result.status(),
+                result.measurementsSubmittedAt(),
+                result.measurementsSubmittedByClientId(),
+                result.processingStartedAt(),
+                result.processingCompletedAt(),
+                result.errorCode(),
+                result.errorMessage(),
+                result.processResult(),
+                result.createdAt(),
+                result.updatedAt(),
+                requiredMeasurements
         );
     }
 }
