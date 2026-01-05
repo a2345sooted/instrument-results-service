@@ -1,22 +1,18 @@
 # Instrument Results Service
 
-A small, production-style Spring Boot backend used to explore and demonstrate backend engineering patterns around data ingestion, processing, and persistence.
+Spring Boot service that manages instrument runs and measurement submissions, with asynchronous processing and a REST API.
 
-The project is intentionally scoped to focus on core backend concerns rather than authentication, UI, or cloud infrastructure.
-
-## Tech Stack
+### Tech Stack
 - Java 17
-- Spring Boot 3.x
+- Spring Boot 3.5.9
 - Gradle
 - PostgreSQL (Docker Compose)
 - Flyway
-
-## Local Development
 
 ### Prerequisites
 - Java 17
 - Docker
 
-### Start PostgreSQL
+### Start PostgreSQL database before running app
 ```bash
 docker compose up -d
