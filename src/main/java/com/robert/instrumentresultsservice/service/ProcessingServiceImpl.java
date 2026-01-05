@@ -11,6 +11,7 @@ import com.robert.instrumentresultsservice.repository.InstrumentRunRepository;
 import com.robert.instrumentresultsservice.service.result.ProcessResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -24,15 +25,18 @@ public class ProcessingServiceImpl implements ProcessingService {
     private final InstrumentRunRepository instrumentRunRepository;
     private final InstrumentRunEventRepository instrumentRunEventRepository;
     private final ObjectMapper objectMapper;
+    private final long processingDelayMs;
 
     public ProcessingServiceImpl(
             InstrumentRunRepository instrumentRunRepository,
             InstrumentRunEventRepository instrumentRunEventRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            @Value("${processing.delay.ms:3000}") long processingDelayMs
     ) {
         this.instrumentRunRepository = instrumentRunRepository;
         this.instrumentRunEventRepository = instrumentRunEventRepository;
         this.objectMapper = objectMapper;
+        this.processingDelayMs = processingDelayMs;
     }
 
     @Override
@@ -46,7 +50,6 @@ public class ProcessingServiceImpl implements ProcessingService {
             return;
         }
 
-        // ---- PROCESSING ----
         OffsetDateTime now = OffsetDateTime.now();
         run.setStatus(InstrumentRunStatus.PROCESSING);
         run.setProcessingStartedAt(now);
@@ -58,22 +61,16 @@ public class ProcessingServiceImpl implements ProcessingService {
         saveEvent(run, InstrumentRunEventType.PROCESSING_STARTED, null);
 
         try {
-            // Simulate work
-            Thread.sleep(3_000);
+            Thread.sleep(processingDelayMs);
 
-            // ---- SUCCESS ----
             OffsetDateTime done = OffsetDateTime.now();
             run.setStatus(InstrumentRunStatus.SUCCEEDED);
             run.setProcessingCompletedAt(done);
-
-            // ✅ NEW: typed process result DTO
             run.setProcessResult(new ProcessResult("stub-result"));
-
             run.setErrorCode(null);
             run.setErrorMessage(null);
 
             instrumentRunRepository.save(run);
-
             saveEvent(run, InstrumentRunEventType.PROCESSING_COMPLETED, null);
 
             log.info("Completed async processing for run {}", runId);
@@ -104,7 +101,6 @@ public class ProcessingServiceImpl implements ProcessingService {
         saveEvent(run, InstrumentRunEventType.PROCESSING_FAILED, details);
     }
 
-    // ✅ UPDATED: JsonNode details instead of String
     private void saveEvent(
             InstrumentRun run,
             InstrumentRunEventType type,
